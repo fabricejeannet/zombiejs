@@ -11,7 +11,6 @@ var mainState = {
         game.stage.backgroundColor = '#71c5cf';
         game.load.image('player', '../assets/sprites/player.png');
         game.load.image('zombie', '../assets/sprites/zombie.png');
-
         game.load.image('bullet', 'assets/sprites/bullet.png');
     },
 
@@ -25,23 +24,10 @@ var mainState = {
 
         this.initBullets(50);
 
-        var upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
-        upKey.onDown.add(this.up, this);
-        upKey.onUp.add(this.yStop, this);
+        this.initKeys();
 
-        var downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
-        downKey.onDown.add(this.down, this);
-        downKey.onUp.add(this.yStop, this);
 
-        var leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-        leftKey.onDown.add(this.left, this);
-        leftKey.onUp.add(this.xStop, this);
-
-        var rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-        rightKey.onDown.add(this.right, this);
-        rightKey.onUp.add(this.xStop, this);
-
-        this.shockWaves = [];
+        this.graphics = game.add.graphics(0, 0);
 
     },
 
@@ -58,20 +44,7 @@ var mainState = {
             game.physics.arcade.collide(this.player, this.zombies[i]);
             game.physics.arcade.overlap(this.bullets, this.zombies[i], this.bulletHitEnemy, null, this);
         }
-
-        for (var i = 0; i < this.shockWaves.length; i++) {
-           var now = game.time.now;
-           var shockWave = this.shockWaves[i];
-           if (shockWave.time + shockWave.duration < now) {
-               console.log('Adding shockwave');
-               this.circle = new Phaser.Circle(shockWave.x, shockWave.y, shockWave.radius);
-           } else {
-               console.log('Removing shockwave');
-               this.shockWaves.splice(i, 1);
-           }
-
-        }
-
+        this.checkAggro(150);
 
     },
 
@@ -80,7 +53,6 @@ var mainState = {
         this.player.anchor.setTo(0.3, 0.2);
         this.game.physics.enable(this.player);
         this.player.body.collideWorldBounds = true;
-        //this.player.body.bounce.setTo(1, 1);
     },
 
     initZombies : function (zombieCount) {
@@ -88,8 +60,8 @@ var mainState = {
         for (var i = 0; i < zombieCount; i++) {
             this.zombies[i] = this.game.add.sprite(this.game.world.randomX, this.game.world.randomY, 'zombie');
             this.game.physics.enable(this.zombies[i]);
+            this.player.anchor.setTo(0.5, 0.5);
             this.zombies[i].body.collideWorldBounds = true;
-            //this.zombies[i].body.bounce.setTo(1, 1);
         }
     },
 
@@ -106,35 +78,45 @@ var mainState = {
     },
 
 
+    initKeys : function() {
+        var upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
+        upKey.onDown.add(this.up, this);
+        upKey.onUp.add(this.yStop, this);
+
+        var downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        downKey.onDown.add(this.down, this);
+        downKey.onUp.add(this.yStop, this);
+
+        var leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+        leftKey.onDown.add(this.left, this);
+        leftKey.onUp.add(this.xStop, this);
+
+        var rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        rightKey.onDown.add(this.right, this);
+        rightKey.onUp.add(this.xStop, this);
+    },
+
     fire : function(){
         console.log('fire');
-
         if (game.time.now > this.nextFire && this.bullets.countDead() > 0) {
-
             this.nextFire = game.time.now + this.fireRate;
-
             var bullet = this.bullets.getFirstDead();
             bullet.rotation= this.player.rotation;
             bullet.reset(this.player.x, this.player.y);
-
-
             game.physics.arcade.moveToPointer(bullet, 300);
-
-            this.addShockWave();
+            this.checkAggro(300);
         }
-
     },
 
-    addShockWave : function () {
-
-        this.shockWaves.push(
-            {
-                x : this.player.body.x,
-                y : this.player.body.y,
-                radius : 100,
-                time : game.time.now,
-                duration : 2000
-            });
+    checkAggro : function(min_distance) {
+        for (var i = 0; i < this.zombies.length; i++) {
+            var zombie = this.zombies[i];
+            var distance = game.physics.arcade.distanceBetween(this.player, zombie);
+            if (distance <= min_distance) {
+                zombie.rotation = game.physics.arcade.angleToXY(zombie, this.player.body.x, this.player.body.y);
+                game.physics.arcade.moveToObject(zombie, this.player);
+            }
+        }
     },
 
     bulletHitEnemy : function  (zombie, bullet) {
