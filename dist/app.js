@@ -9,8 +9,8 @@ var mainState = {
     preload: function () {
 
         game.stage.backgroundColor = '#71c5cf';
-        game.load.image('player', '../assets/sprites/player.png');
-        game.load.image('zombie', '../assets/sprites/zombie.png');
+        game.load.image('player', 'assets/sprites/player.png');
+        game.load.image('zombie', 'assets/sprites/zombie.png');
         game.load.image('bullet', 'assets/sprites/bullet.png');
         game.load.image('ammo', 'assets/sprites/ammo.png');
 
