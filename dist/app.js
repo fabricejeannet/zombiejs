@@ -12,6 +12,8 @@ var mainState = {
         game.load.image('player', '../assets/sprites/player.png');
         game.load.image('zombie', '../assets/sprites/zombie.png');
         game.load.image('bullet', 'assets/sprites/bullet.png');
+        game.load.image('ammo', 'assets/sprites/ammo.png');
+
     },
 
     create: function () {
@@ -26,6 +28,7 @@ var mainState = {
 
         this.initKeys();
 
+        this.initAmmo(2);
 
         this.graphics = game.add.graphics(0, 0);
 
@@ -44,6 +47,12 @@ var mainState = {
             game.physics.arcade.collide(this.player, this.zombies[i]);
             game.physics.arcade.overlap(this.bullets, this.zombies[i], this.bulletHitEnemy, null, this);
         }
+
+        for (var i = 0; i < this.ammoBox.length; i++) {
+            game.physics.arcade.overlap(this.ammoBox[i], this.player, this.getAmmo, null, this);
+        }
+
+
         this.checkAggro(150);
 
     },
@@ -60,8 +69,18 @@ var mainState = {
         for (var i = 0; i < zombieCount; i++) {
             this.zombies[i] = this.game.add.sprite(this.game.world.randomX, this.game.world.randomY, 'zombie');
             this.game.physics.enable(this.zombies[i]);
-            this.player.anchor.setTo(0.5, 0.5);
+            this.zombies[i].anchor.setTo(0.5, 0.5);
             this.zombies[i].body.collideWorldBounds = true;
+
+
+            var angle = Math.floor((Math.random() * 180));
+            var flip = Math.floor((Math.random() * 9));
+
+            if(flip > 4) {
+                angle *= -1;
+            }
+
+            this.zombies[i].rotation = angle;
         }
     },
 
@@ -96,15 +115,32 @@ var mainState = {
         rightKey.onUp.add(this.xStop, this);
     },
 
+    initAmmo : function(ammoBoxCount) {
+
+        this.ammo = 10;
+
+        this.ammoBox = [];
+
+        for (var i = 0; i < ammoBoxCount; i++) {
+            this.ammoBox[i] = this.game.add.sprite(this.game.world.randomX, this.game.world.randomY, 'ammo');
+            this.game.physics.enable(this.ammoBox[i]);
+            this.ammoBox[i].anchor.setTo(0.5, 0.5);
+            this.ammoBox[i].body.collideWorldBounds = true;
+        }
+    },
+
     fire : function(){
         console.log('fire');
-        if (game.time.now > this.nextFire && this.bullets.countDead() > 0) {
-            this.nextFire = game.time.now + this.fireRate;
-            var bullet = this.bullets.getFirstDead();
-            bullet.rotation= this.player.rotation;
-            bullet.reset(this.player.x, this.player.y);
-            game.physics.arcade.moveToPointer(bullet, 300);
-            this.checkAggro(300);
+        if(this.ammo > 0) {
+            if (game.time.now > this.nextFire && this.bullets.countDead() > 0) {
+                this.ammo--;
+                this.nextFire = game.time.now + this.fireRate;
+                var bullet = this.bullets.getFirstDead();
+                bullet.rotation= this.player.rotation;
+                bullet.reset(this.player.x, this.player.y);
+                game.physics.arcade.moveToPointer(bullet, 300);
+                this.checkAggro(300);
+            }
         }
     },
 
@@ -114,16 +150,21 @@ var mainState = {
             var distance = game.physics.arcade.distanceBetween(this.player, zombie);
             if (distance <= min_distance) {
                 zombie.rotation = game.physics.arcade.angleToXY(zombie, this.player.body.x, this.player.body.y);
-                game.physics.arcade.moveToObject(zombie, this.player);
+                game.physics.arcade.moveToObject(zombie, this.player, 20);
             }
         }
     },
 
     bulletHitEnemy : function  (zombie, bullet) {
-        console.log('bullet hits enemy')
         bullet.kill();
         zombie.kill();
     },
+
+    getAmmo : function(ammoBox) {
+      ammoBox.kill()
+      this.ammo += 10;
+    },
+
 
     up : function(){
         this.player.body.velocity.y = -100;
@@ -148,7 +189,13 @@ var mainState = {
 
     xStop : function(){
         this.player.body.velocity.x = 0;
-    }
+    },
+
+    render : function () {
+
+    game.debug.text('Ammo: ' + this.ammo, 32, 32);
+
+}
 
 };
 
