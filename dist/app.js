@@ -62,25 +62,26 @@ var mainState = {
         this.player.anchor.setTo(0.3, 0.2);
         this.game.physics.enable(this.player);
         this.player.body.collideWorldBounds = true;
+        this.precision = 0;
     },
 
     initZombies : function (zombieCount) {
         this.zombies = [];
         for (var i = 0; i < zombieCount; i++) {
+
             this.zombies[i] = this.game.add.sprite(this.game.world.randomX, this.game.world.randomY, 'zombie');
-            this.game.physics.enable(this.zombies[i]);
-            this.zombies[i].anchor.setTo(0.5, 0.5);
-            this.zombies[i].body.collideWorldBounds = true;
-
-
+            var zombie = this.zombies[i];
+            this.game.physics.enable(zombie);
+            zombie.anchor.setTo(0.5, 0.5);
+            zombie.body.collideWorldBounds = true;
             var angle = Math.floor((Math.random() * 180));
             var flip = Math.floor((Math.random() * 9));
-
             if(flip > 4) {
                 angle *= -1;
             }
+            zombie.rotation = angle;
 
-            this.zombies[i].rotation = angle;
+            zombie.health = 100;
         }
     },
 
@@ -98,29 +99,26 @@ var mainState = {
 
 
     initKeys : function() {
-        var upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
+        var upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.Z);
         upKey.onDown.add(this.up, this);
         upKey.onUp.add(this.yStop, this);
 
-        var downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        var downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.S);
         downKey.onDown.add(this.down, this);
         downKey.onUp.add(this.yStop, this);
 
-        var leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+        var leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.Q);
         leftKey.onDown.add(this.left, this);
         leftKey.onUp.add(this.xStop, this);
 
-        var rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        var rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
         rightKey.onDown.add(this.right, this);
         rightKey.onUp.add(this.xStop, this);
     },
 
     initAmmo : function(ammoBoxCount) {
-
         this.ammo = 10;
-
         this.ammoBox = [];
-
         for (var i = 0; i < ammoBoxCount; i++) {
             this.ammoBox[i] = this.game.add.sprite(this.game.world.randomX, this.game.world.randomY, 'ammo');
             this.game.physics.enable(this.ammoBox[i]);
@@ -157,14 +155,17 @@ var mainState = {
 
     bulletHitEnemy : function  (zombie, bullet) {
         bullet.kill();
-        zombie.kill();
+
+        zombie.health -= 25;
+        if(zombie.health <= 0) {
+            zombie.kill();
+        }
     },
 
     getAmmo : function(ammoBox) {
       ammoBox.kill()
       this.ammo += 10;
     },
-
 
     up : function(){
         this.player.body.velocity.y = -100;
@@ -193,9 +194,15 @@ var mainState = {
 
     render : function () {
 
-    game.debug.text('Ammo: ' + this.ammo, 32, 32);
+        game.debug.text('Ammo: ' + this.ammo, 32, 32);
 
-}
+        for (var i = 0; i < this.zombies.length; i++) {
+            var zombie = this.zombies[i];
+            if (zombie.alive) {
+                game.debug.text(zombie.health + '%', zombie.body.x, zombie.body.y - 20);
+            }
+        }
+    }
 
 };
 
