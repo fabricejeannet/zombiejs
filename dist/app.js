@@ -9,10 +9,17 @@ var mainState = {
     preload: function () {
 
         game.stage.backgroundColor = '#71c5cf';
-        game.load.image('player', 'assets/sprites/player.png');
-        game.load.image('zombie', 'assets/sprites/zombie.png');
-        game.load.image('bullet', 'assets/sprites/bullet.png');
-        game.load.image('ammo', 'assets/sprites/ammo.png');
+
+        var spritesToLoad = [
+            {name : 'player', url : 'assets/sprites/player.png'},
+            {name : 'zombie', url : 'assets/sprites/zombie.png'},
+            {name : 'bullet', url : 'assets/sprites/bullet.png'},
+            {name : 'ammo', url : 'assets/sprites/ammo.png'}
+        ];
+
+        for (sprite in spritesToLoad) {
+            game.load.image(spritesToLoad[sprite].name, spritesToLoad[sprite].url);
+        }
 
     },
 
@@ -62,7 +69,7 @@ var mainState = {
         this.player.anchor.setTo(0.3, 0.2);
         this.game.physics.enable(this.player);
         this.player.body.collideWorldBounds = true;
-        this.precision = 0;
+        this.player.precision = 50;
     },
 
     initZombies : function (zombieCount) {
@@ -156,14 +163,46 @@ var mainState = {
     bulletHitEnemy : function  (zombie, bullet) {
         bullet.kill();
 
-        zombie.health -= 25;
+        var distance = game.physics.arcade.distanceBetween(this.player, zombie);
+
+        zombie.health -= this.damage(distance);
+
         if(zombie.health <= 0) {
             zombie.kill();
         }
     },
 
+
+    damage : function (distanceInPx) {
+
+        var distanceInMeters = distanceInPx / 30;
+
+
+
+        var finalPrecision = this.player.precision * Math.pow((1 - (2/100)), distanceInMeters);
+
+
+        var damage= 0;
+
+
+        var shot = Math.floor(Math.random() * 100);
+
+        if (shot <= finalPrecision) {
+            damage = 100;
+        }
+
+        console.log("distance en px : " + distanceInPx);
+        console.log("distance en m : " + distanceInMeters);
+        console.log ("Precision : " + this.player.precision);
+        console.log ("Precision finale : " + finalPrecision);
+        console.log("Damage : " + damage);
+        console.log("----------------------------------------");
+
+        return damage;
+    },
+
     getAmmo : function(ammoBox) {
-      ammoBox.kill()
+      ammoBox.kill();
       this.ammo += 10;
     },
 
